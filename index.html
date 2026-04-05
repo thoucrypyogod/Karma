@@ -5,819 +5,262 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KARMA — The Path is Yours</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --void: #03000a;
-    --abyss: #080412;
-    --deep: #0e0818;
-    --crimson: #8b0000;
-    --blood: #c0392b;
-    --ember: #e74c3c;
-    --gold: #c9a84c;
-    --jade: #1a6b4a;
-    --jade-bright: #27ae60;
-    --mist: #a89bc2;
-    --silk: #e8dcc8;
-    --ghost: rgba(232,220,200,0.06);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--void);
-    color: var(--silk);
-    font-family: 'Crimson Pro', Georgia, serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    cursor: default;
-  }
-
-  /* ── BACKGROUND EFFECTS ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 40% at 20% 50%, rgba(139,0,0,0.08) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 60% at 80% 30%, rgba(26,107,74,0.06) 0%, transparent 70%),
-      radial-gradient(ellipse 80% 80% at 50% 100%, rgba(201,168,76,0.04) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Vertical chinese-style lines */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 80px,
-      rgba(201,168,76,0.02) 80px,
-      rgba(201,168,76,0.02) 81px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── SCREENS ── */
-  .screen {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  .screen.hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(20px);
-  }
-
-  /* ── AUTH SCREEN ── */
-  .auth-container {
-    width: 100%;
-    max-width: 420px;
-    padding: 20px;
-    position: relative;
-  }
-
-  .karma-logo {
-    text-align: center;
-    margin-bottom: 40px;
-  }
-
-  .karma-hanzi {
-    font-size: 4rem;
-    color: var(--gold);
-    opacity: 0.15;
-    letter-spacing: 0.3em;
-    display: block;
-    animation: breathe 4s ease-in-out infinite;
-  }
-
-  .karma-title {
-    font-family: 'Cinzel', serif;
-    font-size: 3.5rem;
-    font-weight: 900;
-    letter-spacing: 0.3em;
-    background: linear-gradient(180deg, var(--silk) 0%, var(--gold) 60%, var(--crimson) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-    animation: fadeDown 1s ease both;
-  }
-
-  .karma-tagline {
-    font-style: italic;
-    color: var(--mist);
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-    margin-top: 8px;
-    opacity: 0.7;
-    animation: fadeDown 1s ease 0.2s both;
-  }
-
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 24px 0;
-  }
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0.3;
-  }
-  .divider span {
-    color: var(--gold);
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    opacity: 0.6;
-  }
-
-  .auth-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 28px;
-    border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .auth-tab {
-    flex: 1;
-    padding: 10px;
-    background: transparent;
-    border: none;
-    color: var(--mist);
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  .auth-tab.active {
-    background: rgba(201,168,76,0.1);
-    color: var(--gold);
-    border-bottom: 2px solid var(--gold);
-  }
-
-  .form-group {
-    margin-bottom: 16px;
-  }
-
-  .form-label {
-    display: block;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
-    color: var(--mist);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-  }
-
-  .form-input {
-    width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(201,168,76,0.15);
-    border-radius: 2px;
-    padding: 12px 16px;
-    color: var(--silk);
-    font-family: 'Crimson Pro', serif;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.3s, background 0.3s;
-  }
-  .form-input:focus {
-    border-color: rgba(201,168,76,0.5);
-    background: rgba(201,168,76,0.04);
-  }
-  .form-input::placeholder { color: rgba(168,155,194,0.3); }
-
-  .path-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .path-btn {
-    padding: 12px 8px;
-    border-radius: 2px;
-    border: 1px solid;
-    background: transparent;
-    cursor: pointer;
-    font-family: 'Cinzel', serif;
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    transition: all 0.3s;
-    text-align: center;
-  }
-  .path-btn.chaos {
-    border-color: rgba(139,0,0,0.4);
-    color: #e74c3c;
-  }
-  .path-btn.chaos.selected, .path-btn.chaos:hover {
-    background: rgba(139,0,0,0.15);
-    border-color: var(--blood);
-    box-shadow: 0 0 20px rgba(139,0,0,0.2);
-  }
-  .path-btn.order {
-    border-color: rgba(26,107,74,0.4);
-    color: var(--jade-bright);
-  }
-  .path-btn.order.selected, .path-btn.order:hover {
-    background: rgba(26,107,74,0.15);
-    border-color: var(--jade-bright);
-    box-shadow: 0 0 20px rgba(26,107,74,0.2);
-  }
-  .path-btn.void {
-    border-color: rgba(168,155,194,0.3);
-    color: var(--mist);
-  }
-  .path-btn.void.selected, .path-btn.void:hover {
-    background: rgba(168,155,194,0.08);
-    border-color: var(--mist);
-    box-shadow: 0 0 20px rgba(168,155,194,0.1);
-  }
-  .path-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
-
-  .btn-primary {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, rgba(139,0,0,0.6), rgba(80,0,0,0.8));
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 2px;
-    color: var(--silk);
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.25em;
-    cursor: pointer;
-    transition: all 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(201,168,76,0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .btn-primary:hover::before { opacity: 1; }
-  .btn-primary:hover {
-    border-color: rgba(201,168,76,0.6);
-    box-shadow: 0 0 30px rgba(139,0,0,0.3);
-  }
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .msg {
-    text-align: center;
-    font-size: 0.8rem;
-    margin-top: 12px;
-    min-height: 20px;
-    letter-spacing: 0.05em;
-  }
-  .msg.error { color: var(--ember); }
-  .msg.success { color: var(--jade-bright); }
-
-  /* ── DASHBOARD ── */
-  #dashboard {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100vh;
-    overflow-y: auto;
-    padding: 0;
-    align-items: stretch;
-    justify-content: flex-start;
-  }
-
-  .dash-header {
-    background: rgba(8,4,18,0.95);
-    border-bottom: 1px solid rgba(201,168,76,0.15);
-    padding: 14px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    backdrop-filter: blur(10px);
-  }
-
-  .dash-logo {
-    font-family: 'Cinzel', serif;
-    font-size: 1.1rem;
-    font-weight: 900;
-    letter-spacing: 0.3em;
-    background: linear-gradient(135deg, var(--silk), var(--gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .dash-user {
-    text-align: right;
-  }
-  .dash-username {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    color: var(--gold);
-    letter-spacing: 0.1em;
-  }
-  .dash-title {
-    font-size: 0.65rem;
-    color: var(--mist);
-    letter-spacing: 0.05em;
-    font-style: italic;
-  }
-
-  .dash-body {
-    padding: 20px;
-    flex: 1;
-  }
-
-  /* Alignment Banner */
-  .alignment-banner {
-    border-radius: 4px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid;
-    position: relative;
-    overflow: hidden;
-  }
-  .alignment-banner::before {
-    content: attr(data-hanzi);
-    position: absolute;
-    right: -10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 5rem;
-    opacity: 0.06;
-    font-family: serif;
-    letter-spacing: -0.1em;
-  }
-  .alignment-banner.chaos {
-    background: rgba(139,0,0,0.1);
-    border-color: rgba(139,0,0,0.3);
-  }
-  .alignment-banner.order {
-    background: rgba(26,107,74,0.1);
-    border-color: rgba(26,107,74,0.3);
-  }
-  .alignment-banner.neutral {
-    background: rgba(168,155,194,0.07);
-    border-color: rgba(168,155,194,0.2);
-  }
-  .align-label {
-    font-family: 'Cinzel', serif;
-    font-size: 0.65rem;
-    letter-spacing: 0.2em;
-    opacity: 0.6;
-    margin-bottom: 4px;
-  }
-  .align-value {
-    font-family: 'Cinzel', serif;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  .align-score {
-    font-size: 1.8rem;
-    font-family: 'Cinzel', serif;
-    font-weight: 900;
-    opacity: 0.8;
-  }
-
-  /* Stat Cards */
-  .section-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.65rem;
-    letter-spacing: 0.25em;
-    color: var(--gold);
-    opacity: 0.6;
-    margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(201,168,76,0.1);
-  }
-
-  .resources-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-
-  .resource-card {
-    background: var(--ghost);
-    border: 1px solid rgba(201,168,76,0.1);
-    border-radius: 4px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-  .resource-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--bar-color, var(--gold));
-    opacity: 0.4;
-  }
-  .resource-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    color: var(--mist);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .resource-value {
-    font-family: 'Cinzel', serif;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--silk);
-  }
-  .resource-sub {
-    font-size: 0.65rem;
-    color: var(--mist);
-    opacity: 0.5;
-    margin-top: 2px;
-  }
-
-  /* Energy Bar */
-  .energy-bar-wrap {
-    background: var(--ghost);
-    border: 1px solid rgba(201,168,76,0.1);
-    border-radius: 4px;
-    padding: 14px;
-    margin-bottom: 20px;
-  }
-  .energy-bar-label {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .energy-bar-track {
-    height: 6px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .energy-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--crimson), var(--gold));
-    border-radius: 3px;
-    transition: width 1s ease;
-    position: relative;
-  }
-  .energy-bar-fill::after {
-    content: '';
-    position: absolute;
-    right: 0; top: 0; bottom: 0;
-    width: 20px;
-    background: rgba(255,255,255,0.3);
-    filter: blur(4px);
-  }
-
-  /* Stats Grid */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 20px;
-  }
-
-  .stat-row {
-    background: var(--ghost);
-    border: 1px solid rgba(201,168,76,0.08);
-    border-radius: 4px;
-    padding: 10px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .stat-name {
-    font-size: 0.7rem;
-    color: var(--mist);
-    letter-spacing: 0.05em;
-  }
-  .stat-val {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85rem;
-    color: var(--gold);
-    font-weight: 600;
-  }
-
-  /* Crimes section */
-  .crimes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 80px;
-  }
-
-  .crime-card {
-    background: var(--ghost);
-    border: 1px solid rgba(201,168,76,0.08);
-    border-radius: 4px;
-    padding: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .crime-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--crime-color, var(--crimson));
-  }
-  .crime-card:hover {
-    background: rgba(201,168,76,0.05);
-    border-color: rgba(201,168,76,0.2);
-    transform: translateX(2px);
-  }
-  .crime-name {
-    font-family: 'Cinzel', serif;
-    font-size: 0.75rem;
-    color: var(--silk);
-    margin-bottom: 4px;
-  }
-  .crime-meta {
-    font-size: 0.65rem;
-    color: var(--mist);
-    opacity: 0.6;
-  }
-  .crime-reward {
-    text-align: right;
-  }
-  .crime-coins {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    color: var(--gold);
-  }
-  .crime-energy {
-    font-size: 0.6rem;
-    color: var(--ember);
-    margin-top: 2px;
-  }
-
-  /* Bottom Nav */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: rgba(8,4,18,0.97);
-    border-top: 1px solid rgba(201,168,76,0.1);
-    display: flex;
-    z-index: 100;
-    backdrop-filter: blur(10px);
-  }
-  .nav-btn {
-    flex: 1;
-    padding: 12px 4px;
-    background: transparent;
-    border: none;
-    color: var(--mist);
-    font-family: 'Cinzel', serif;
-    font-size: 0.55rem;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    opacity: 0.5;
-  }
-  .nav-btn.active {
-    color: var(--gold);
-    opacity: 1;
-  }
-  .nav-btn span { font-size: 1.1rem; }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(3,0,10,0.9);
-    z-index: 200;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-    backdrop-filter: blur(4px);
-  }
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-  .modal {
-    background: var(--deep);
-    border: 1px solid rgba(201,168,76,0.2);
-    border-bottom: none;
-    border-radius: 12px 12px 0 0;
-    width: 100%;
-    max-width: 500px;
-    padding: 24px 20px 40px;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .modal-overlay.open .modal {
-    transform: translateY(0);
-  }
-  .modal-title {
-    font-family: 'Cinzel', serif;
-    font-size: 1rem;
-    color: var(--silk);
-    margin-bottom: 6px;
-  }
-  .modal-sub {
-    font-size: 0.75rem;
-    color: var(--mist);
-    opacity: 0.6;
-    margin-bottom: 20px;
-    font-style: italic;
-  }
-  .modal-stat {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 0.8rem;
-  }
-  .modal-stat-label { color: var(--mist); }
-  .modal-stat-value { color: var(--silk); font-family: 'Cinzel', serif; }
-  .modal-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  .btn-commit {
-    padding: 12px;
-    border-radius: 2px;
-    border: 1px solid rgba(139,0,0,0.5);
-    background: rgba(139,0,0,0.2);
-    color: var(--silk);
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-commit:hover {
-    background: rgba(139,0,0,0.35);
-    border-color: var(--blood);
-  }
-  .btn-cancel {
-    padding: 12px;
-    border-radius: 2px;
-    border: 1px solid rgba(201,168,76,0.2);
-    background: transparent;
-    color: var(--mist);
-    font-family: 'Cinzel', serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: var(--deep);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 4px;
-    padding: 10px 20px;
-    font-size: 0.8rem;
-    font-family: 'Cinzel', serif;
-    letter-spacing: 0.1em;
-    z-index: 300;
-    opacity: 0;
-    transition: all 0.3s;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  .toast.success { color: var(--jade-bright); border-color: rgba(39,174,96,0.4); }
-  .toast.error { color: var(--ember); border-color: rgba(231,76,60,0.4); }
-
-  /* ── ANIMATIONS ── */
-  @keyframes breathe {
-    0%, 100% { opacity: 0.1; transform: scale(1); }
-    50% { opacity: 0.2; transform: scale(1.02); }
-  }
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-15px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+    --void:#03000a; --deep:#0e0818; --crimson:#8b0000; --blood:#c0392b;
+    --ember:#e74c3c; --gold:#c9a84c; --jade:#1a6b4a; --jade-bright:#27ae60;
+    --mist:#a89bc2; --silk:#e8dcc8; --ghost:rgba(232,220,200,0.06);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--void);color:var(--silk);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 50%,rgba(139,0,0,0.08) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 80% 30%,rgba(26,107,74,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  .page{display:none;min-height:100vh;position:relative;z-index:1;}
+  .page.active{display:flex;flex-direction:column;}
+  #authPage,#resetPage{align-items:center;justify-content:center;padding:20px;}
+  .auth-box,.reset-box{width:100%;max-width:400px;}
+  .logo{text-align:center;margin-bottom:28px;}
+  .logo-hanzi{font-size:2.8rem;color:var(--gold);opacity:0.15;letter-spacing:0.3em;display:block;animation:breathe 4s ease-in-out infinite;}
+  .logo-title{font-family:'Cinzel',serif;font-size:3rem;font-weight:900;letter-spacing:0.3em;background:linear-gradient(180deg,var(--silk) 0%,var(--gold) 60%,var(--crimson) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+  .logo-tag{font-style:italic;color:var(--mist);font-size:0.85rem;letter-spacing:0.15em;margin-top:6px;opacity:0.7;}
+  .divider{display:flex;align-items:center;gap:10px;margin:18px 0;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.3;}
+  .divider span{color:var(--gold);font-size:0.62rem;letter-spacing:0.2em;opacity:0.6;}
+  .tabs{display:flex;border:1px solid rgba(201,168,76,0.2);border-radius:2px;overflow:hidden;margin-bottom:22px;}
+  .tab{flex:1;padding:10px;background:transparent;border:none;color:var(--mist);font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.15em;cursor:pointer;transition:all 0.3s;border-bottom:2px solid transparent;}
+  .tab.active{background:rgba(201,168,76,0.1);color:var(--gold);border-bottom-color:var(--gold);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .field{margin-bottom:13px;}
+  .label{display:block;font-size:0.6rem;letter-spacing:0.2em;color:var(--mist);margin-bottom:5px;text-transform:uppercase;}
+  .input{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(201,168,76,0.15);border-radius:2px;padding:11px 14px;color:var(--silk);font-family:'Crimson Pro',serif;font-size:1rem;outline:none;transition:border-color 0.3s,background 0.3s;}
+  .input:focus{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.04);}
+  .input::placeholder{color:rgba(168,155,194,0.3);}
+  .paths{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:16px;}
+  .path{padding:10px 5px;border-radius:2px;border:1px solid;background:transparent;cursor:pointer;font-family:'Cinzel',serif;font-size:0.56rem;letter-spacing:0.07em;transition:all 0.3s;text-align:center;}
+  .path-icon{font-size:1rem;display:block;margin-bottom:3px;}
+  .path.chaos{border-color:rgba(139,0,0,0.4);color:#e74c3c;}
+  .path.chaos.on{background:rgba(139,0,0,0.15);border-color:var(--blood);}
+  .path.order{border-color:rgba(26,107,74,0.4);color:var(--jade-bright);}
+  .path.order.on{background:rgba(26,107,74,0.15);border-color:var(--jade-bright);}
+  .path.void{border-color:rgba(168,155,194,0.3);color:var(--mist);}
+  .path.void.on{background:rgba(168,155,194,0.08);border-color:var(--mist);}
+  .btn{width:100%;padding:13px;border-radius:2px;border:1px solid rgba(201,168,76,0.3);background:linear-gradient(135deg,rgba(139,0,0,0.6),rgba(80,0,0,0.8));color:var(--silk);font-family:'Cinzel',serif;font-size:0.76rem;letter-spacing:0.22em;cursor:pointer;transition:all 0.3s;}
+  .btn:hover{border-color:rgba(201,168,76,0.6);box-shadow:0 0 24px rgba(139,0,0,0.3);}
+  .btn.jade{background:linear-gradient(135deg,rgba(26,107,74,0.6),rgba(15,60,40,0.8));}
+  .msg{text-align:center;font-size:0.76rem;margin-top:10px;min-height:18px;}
+  .msg.err{color:var(--ember);}
+  .msg.ok{color:var(--jade-bright);}
+  /* DASHBOARD */
+  #dashPage{padding-bottom:60px;}
+  .dash-header{background:rgba(8,4,18,0.95);border-bottom:1px solid rgba(201,168,76,0.15);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);}
+  .dash-logo{font-family:'Cinzel',serif;font-size:0.95rem;font-weight:900;letter-spacing:0.3em;background:linear-gradient(135deg,var(--silk),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .dash-name{font-family:'Cinzel',serif;font-size:0.76rem;color:var(--gold);text-align:right;}
+  .dash-sub{font-size:0.6rem;color:var(--mist);font-style:italic;text-align:right;}
+  .dash-body{padding:14px;}
+  .sec-title{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.25em;color:var(--gold);opacity:0.6;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid rgba(201,168,76,0.1);}
+  .align-card{border-radius:4px;padding:13px 15px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid;position:relative;overflow:hidden;}
+  .align-card::before{content:attr(data-h);position:absolute;right:-5px;top:50%;transform:translateY(-50%);font-size:4rem;opacity:0.06;}
+  .align-card.chaos{background:rgba(139,0,0,0.1);border-color:rgba(139,0,0,0.3);}
+  .align-card.order{background:rgba(26,107,74,0.1);border-color:rgba(26,107,74,0.3);}
+  .align-card.neutral{background:rgba(168,155,194,0.07);border-color:rgba(168,155,194,0.2);}
+  .align-lbl{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.2em;opacity:0.6;margin-bottom:3px;}
+  .align-val{font-family:'Cinzel',serif;font-size:0.95rem;font-weight:600;}
+  .align-num{font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;opacity:0.8;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;}
+  .card{background:var(--ghost);border:1px solid rgba(201,168,76,0.1);border-radius:4px;padding:11px;position:relative;overflow:hidden;}
+  .card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--cc,var(--gold));opacity:0.4;}
+  .card-lbl{font-size:0.56rem;letter-spacing:0.15em;color:var(--mist);text-transform:uppercase;margin-bottom:4px;}
+  .card-val{font-family:'Cinzel',serif;font-size:1.15rem;font-weight:600;}
+  .card-sub{font-size:0.58rem;color:var(--mist);opacity:0.5;margin-top:2px;}
+  .se-wrap{background:var(--ghost);border:1px solid rgba(201,168,76,0.1);border-radius:4px;padding:11px;margin-bottom:14px;}
+  .se-top{display:flex;justify-content:space-between;margin-bottom:6px;}
+  .se-track{height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+  .se-fill{height:100%;background:linear-gradient(90deg,var(--crimson),var(--gold));border-radius:3px;transition:width 1s ease;}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;}
+  .stat-row{background:var(--ghost);border:1px solid rgba(201,168,76,0.08);border-radius:4px;padding:8px 11px;display:flex;justify-content:space-between;align-items:center;}
+  .stat-name{font-size:0.66rem;color:var(--mist);}
+  .stat-val{font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);}
+  .crimes-list{display:flex;flex-direction:column;gap:6px;margin-bottom:20px;}
+  .crime-card{background:var(--ghost);border:1px solid rgba(201,168,76,0.08);border-radius:4px;padding:11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+  .crime-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cc,var(--crimson));}
+  .crime-card:active{background:rgba(201,168,76,0.05);transform:translateX(2px);}
+  .crime-name{font-family:'Cinzel',serif;font-size:0.7rem;color:var(--silk);margin-bottom:3px;}
+  .crime-meta{font-size:0.6rem;color:var(--mist);opacity:0.6;}
+  .crime-r{text-align:right;}
+  .crime-coins{font-family:'Cinzel',serif;font-size:0.72rem;color:var(--gold);}
+  .crime-se{font-size:0.57rem;color:var(--ember);margin-top:2px;}
+  .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(8,4,18,0.97);border-top:1px solid rgba(201,168,76,0.1);display:none;z-index:50;backdrop-filter:blur(10px);}
+  .bnav.show{display:flex;}
+  .bnav-btn{flex:1;padding:10px 3px;background:transparent;border:none;color:var(--mist);font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.07em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:0.5;transition:all 0.2s;}
+  .bnav-btn.on{color:var(--gold);opacity:1;}
+  .bnav-btn span{font-size:0.95rem;}
+  .overlay{position:fixed;inset:0;background:rgba(3,0,10,0.9);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px);}
+  .overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--deep);border:1px solid rgba(201,168,76,0.2);border-bottom:none;border-radius:12px 12px 0 0;width:100%;max-width:500px;padding:20px 16px 34px;transform:translateY(100%);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);}
+  .overlay.open .modal{transform:translateY(0);}
+  .modal-title{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--silk);margin-bottom:4px;}
+  .modal-sub{font-size:0.7rem;color:var(--mist);opacity:0.6;margin-bottom:14px;font-style:italic;}
+  .modal-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.76rem;}
+  .mrl{color:var(--mist);}
+  .mrr{color:var(--silk);font-family:'Cinzel',serif;}
+  .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+  .btn-commit{padding:10px;border-radius:2px;border:1px solid rgba(139,0,0,0.5);background:rgba(139,0,0,0.2);color:var(--silk);font-family:'Cinzel',serif;font-size:0.66rem;letter-spacing:0.1em;cursor:pointer;}
+  .btn-cancel{padding:10px;border-radius:2px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:var(--mist);font-family:'Cinzel',serif;font-size:0.66rem;letter-spacing:0.1em;cursor:pointer;}
+  .reset-title{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);text-align:center;margin-bottom:6px;letter-spacing:0.2em;}
+  .reset-sub{text-align:center;color:var(--mist);font-size:0.78rem;margin-bottom:22px;font-style:italic;}
+  .toast{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--deep);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:8px 16px;font-size:0.72rem;font-family:'Cinzel',serif;letter-spacing:0.1em;z-index:300;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.ok{color:var(--jade-bright);border-color:rgba(39,174,96,0.4);}
+  .toast.err{color:var(--ember);border-color:rgba(231,76,60,0.4);}
+  @keyframes breathe{0%,100%{opacity:0.1;transform:scale(1);}50%{opacity:0.2;transform:scale(1.02);}}
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:2px;}
 </style>
 </head>
 <body>
 
-<!-- ══════════════ AUTH SCREEN ══════════════ -->
-<div class="screen" id="authScreen">
-  <div class="auth-container">
-    <div class="karma-logo">
-      <span class="karma-hanzi">業 道 天</span>
-      <div class="karma-title">KARMA</div>
-      <div class="karma-tagline">You play the odds. The world plays you.</div>
+<!-- AUTH -->
+<div id="authPage" class="page active">
+  <div class="auth-box">
+    <div class="logo">
+      <span class="logo-hanzi">業 道 天</span>
+      <div class="logo-title">KARMA</div>
+      <div class="logo-tag">You play the odds. The world plays you.</div>
     </div>
-
     <div class="divider"><span>ENTER THE PATH</span></div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">RETURN</button>
-      <button class="auth-tab" onclick="switchTab('register')">BEGIN</button>
+    <div class="tabs">
+      <button class="tab active" id="tabReturn" onclick="showTab('login')">RETURN</button>
+      <button class="tab" id="tabBegin" onclick="showTab('register')">BEGIN</button>
     </div>
-
-    <!-- LOGIN -->
-    <div id="loginForm">
-      <div class="form-group">
-        <label class="form-label">Spirit Email</label>
-        <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Dao Seal (Password)</label>
-        <input class="form-input" type="password" id="loginPassword" placeholder="••••••••">
-      </div>
-      <button class="btn-primary" onclick="login()">ENTER THE REALM</button>
+    <div id="loginPanel" class="panel active">
+      <div class="field"><label class="label">Spirit Email</label><input class="input" type="email" id="loginEmail" placeholder="your@email.com"></div>
+      <div class="field"><label class="label">Dao Seal (Password)</label><input class="input" type="password" id="loginPass" placeholder="••••••••"></div>
+      <button class="btn" onclick="doLogin()">ENTER THE REALM</button>
+      <div class="msg" id="loginMsg"></div>
     </div>
-
-    <!-- REGISTER -->
-    <div id="registerForm" style="display:none">
-      <div class="form-group">
-        <label class="form-label">Cultivator Name</label>
-        <input class="form-input" type="text" id="regUsername" placeholder="Your name in this world">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Spirit Email</label>
-        <input class="form-input" type="email" id="regEmail" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Dao Seal (Password)</label>
-        <input class="form-input" type="password" id="regPassword" placeholder="Min. 8 characters">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Choose Your Path</label>
-        <div class="path-selector">
-          <button class="path-btn chaos selected" onclick="selectPath('chaos', this)">
-            <span class="path-icon">☯</span>DEMON DAO
-          </button>
-          <button class="path-btn order" onclick="selectPath('order', this)">
-            <span class="path-icon">⚡</span>HEAVEN DAO
-          </button>
-          <button class="path-btn void" onclick="selectPath('void', this)">
-            <span class="path-icon">◈</span>VOID DAO
-          </button>
+    <div id="registerPanel" class="panel">
+      <div class="field"><label class="label">Cultivator Name</label><input class="input" type="text" id="regName" placeholder="Your name in this world"></div>
+      <div class="field"><label class="label">Spirit Email</label><input class="input" type="email" id="regEmail" placeholder="your@email.com"></div>
+      <div class="field"><label class="label">Dao Seal (min 8 characters)</label><input class="input" type="password" id="regPass" placeholder="••••••••"></div>
+      <div class="field">
+        <label class="label">Choose Your Path</label>
+        <div class="paths">
+          <button class="path chaos on" id="pChaos" onclick="pickPath('chaos')"><span class="path-icon">☯</span>DEMON DAO</button>
+          <button class="path order" id="pOrder" onclick="pickPath('order')"><span class="path-icon">⚡</span>HEAVEN DAO</button>
+          <button class="path void" id="pVoid" onclick="pickPath('void')"><span class="path-icon">◈</span>VOID DAO</button>
         </div>
       </div>
-      <button class="btn-primary" onclick="register()">AWAKEN</button>
+      <button class="btn" onclick="doRegister()">AWAKEN</button>
+      <div class="msg" id="regMsg"></div>
     </div>
-
-    <div class="msg" id="authMsg"></div>
   </div>
 </div>
 
-<!-- ══════════════ DASHBOARD ══════════════ -->
-<div class="screen hidden" id="dashScreen">
-  <div id="dashboard">
-    <div class="dash-header">
-      <div class="dash-logo">KARMA</div>
-      <div class="dash-user">
-        <div class="dash-username" id="dashUsername">—</div>
-     
+<!-- RESET PAGE -->
+<div id="resetPage" class="page">
+  <div class="reset-box">
+    <div class="logo" style="margin-bottom:16px"><div class="logo-title" style="font-size:2rem">KARMA</div></div>
+    <div class="reset-title">Reset Dao Seal</div>
+    <div class="reset-sub">Enter your new password to reclaim your path</div>
+    <div class="field"><label class="label">New Dao Seal</label><input class="input" type="password" id="newPass" placeholder="Min 8 characters"></div>
+    <div class="field"><label class="label">Confirm Dao Seal</label><input class="input" type="password" id="confirmPass" placeholder="Repeat password"></div>
+    <button class="btn jade" onclick="doReset()">SEAL THE PATH</button>
+    <div class="msg" id="resetMsg"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashPage" class="page">
+  <div class="dash-header">
+    <div class="dash-logo">KARMA</div>
+    <div>
+      <div class="dash-name" id="dashName">—</div>
+      <div class="dash-sub" id="dashSub">Cultivator</div>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="align-card neutral" id="alignCard" data-h="道">
+      <div><div class="align-lbl">CULTIVATION ALIGNMENT</div><div class="align-val" id="alignVal">Void Dao</div></div>
+      <div class="align-num" id="alignNum">0</div>
+    </div>
+    <div class="sec-title">RESOURCES</div>
+    <div class="grid2">
+      <div class="card" style="--cc:var(--gold)"><div class="card-lbl">Spirit Coins</div><div class="card-val" id="resCoins">—</div><div class="card-sub">On hand</div></div>
+      <div class="card" style="--cc:var(--jade-bright)"><div class="card-lbl">Bank Vault</div><div class="card-val" id="resBank">—</div><div class="card-sub">Secured</div></div>
+      <div class="card" style="--cc:var(--mist)"><div class="card-lbl">Cultivation Realm</div><div class="card-val" id="resRealm">—</div><div class="card-sub">Stage</div></div>
+      <div class="card" style="--cc:var(--ember)"><div class="card-lbl">Dao Fragments</div><div class="card-val" id="resDao">—</div><div class="card-sub">Total XP</div></div>
+    </div>
+    <div class="se-wrap">
+      <div class="se-top"><span class="card-lbl" style="margin:0">SPIRITUAL ENERGY</span><span style="font-family:'Cinzel',serif;font-size:0.76rem;color:var(--gold)" id="seText">—</span></div>
+      <div class="se-track"><div class="se-fill" id="seBar" style="width:0%"></div></div>
+    </div>
+    <div class="sec-title">CULTIVATION ARTS</div>
+    <div class="stats-grid">
+      <div class="stat-row"><span class="stat-name">Qi Force</span><span class="stat-val" id="sQi">—</span></div>
+      <div class="stat-row"><span class="stat-name">Iron Body</span><span class="stat-val" id="sIron">—</span></div>
+      <div class="stat-row"><span class="stat-name">Wind Step</span><span class="stat-val" id="sWind">—</span></div>
+      <div class="stat-row"><span class="stat-name">Shadow Hand</span><span class="stat-val" id="sShadow">—</span></div>
+      <div class="stat-row"><span class="stat-name">Veil Art</span><span class="stat-val" id="sVeil">—</span></div>
+      <div class="stat-row"><span class="stat-name">Mind Dao</span><span class="stat-val" id="sMind">—</span></div>
+      <div class="stat-row" style="grid-column:1/-1"><span class="stat-name">Soul Root</span><span class="stat-val" id="sSoul">—</span></div>
+    </div>
+    <div class="sec-title">AVAILABLE MISSIONS</div>
+    <div class="crimes-list" id="crimesList"><div style="text-align:center;color:var(--mist);padding:20px;font-size:0.78rem;opacity:0.5">Loading missions...</div></div>
+  </div>
+</div>
+
+<div class="bnav" id="bnav">
+  <button class="bnav-btn on"><span>⌂</span>REALM</button>
+  <button class="bnav-btn"><span>◈</span>MISSIONS</button>
+  <button class="bnav-btn"><span>⚔</span>SECT</button>
+  <button class="bnav-btn"><span>☯</span>DAO</button>
+  <button class="bnav-btn" onclick="doLogout()"><span>↩</span>LEAVE</button>
+</div>
+
+<div class="overlay" id="crimeOverlay" onclick="maybeClose(event)">
+  <div class="modal">
+    <div class="modal-title" id="mName">—</div>
+    <div class="modal-sub" id="mSub">—</div>
+    <div class="modal-row"><span class="mrl">Success Chance</span><span class="mrr" id="mChance">—</span></div>
+    <div class="modal-row"><span class="mrl">Spirit Coins</span><span class="mrr" id="mCoins">—</span></div>
+    <div class="modal-row"><span class="mrl">Energy Cost</span><span class="mrr" id="mEnergy">—</span></div>
+    <div class="modal-row"><span class="mrl">Dao Prison Risk</span><span class="mrr" id="mJail">—</span></div>
+    <div class="modal-row"><span class="mrl">Alignment Shift</span><span class="mrr" id="mAlign">—</span></div>
+    <div class="modal-btns">
+      <button class="btn-commit" onclick="commitCrime()">COMMIT</button>
+      <button class="btn-cancel" onclick="closeModal()">RETREAT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SB = createClient(
+  'https://errhvfrlkdjwwesvzuod.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycmh2ZnJsa2Rqd3dlc3Z6dW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjQ3NzAsImV4cCI6MjA5MDYwMDc3MH0.UuJCJMl66_rYB03UxMEzbZisqmKAqxYQDRZVgPleclk'
+);
+
+let player = null, selPath = 'chaos', selCrime = null;
+
+// expose functions to window so onclick works
+window.showTab = (t) => {
+  document.getElementById('tabReturn').classList.toggle('active', t==='login');
+  document.getElementById('tabBegin').classList.toggle('active', t==='register');
+  document.getElementById('loginPanel').classList.toggle('active', t==='login');
+  document.getElementById('registerPanel').classList.toggle('active', t==='register');
+};
+
+window.pickPath = (p) => {
+  selPath = p;
+  ['chaos','order','void'].forEach(x => {
+    document.getElementById('p'+x[0].toUpperCase()+x.slice(1)).classList.toggle('on', x===p);
+  });
+};
+
+window.doLogin = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const msg   = document.getElementById('loginMsg');
