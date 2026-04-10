@@ -264,4 +264,328 @@ window.doLogin = async () => {
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
   const msg   = document.getElementById('loginMsg');
+    msg.textContent = '';
+  if (!email || !pass) { msg.textContent = 'Enter both email and seal.'; msg.className = 'msg err'; return; }
+  
+  const { data, error } = await SB.auth.signInWithPassword({ email, password: pass });
+  if (error) { msg.textContent = error.message; msg.className = 'msg err'; return; }
+  
+  await loadPlayer(data.user.id);
+};
+
+window.doRegister = async () => {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const msg = document.getElementById('regMsg');
+  
+  msg.textContent = '';
+  if (!name || !email || !pass) { msg.textContent = 'Fill all fields.'; msg.className = 'msg err'; return; }
+  if (pass.length < 8) { msg.textContent = 'Seal must be at least 8 characters.'; msg.className = 'msg err'; return; }
+  
+  const { data: authData, error: authErr } = await SB.auth.signUp({ 
+    email, 
+    password: pass,
+    options: { data: { name } }
+  });
+  
+  if (authErr) { msg.textContent = authErr.message; msg.className = 'msg err'; return; }
+  
+  // Create player profile
+  const userId = authData.user.id;
+  const newPlayer = {
+    id: userId,
+    name,
+    email,
+    alignment: selPath,
+    alignment_value: 0,
+    coins: 100,
+    bank: 0,
+    realm: 'Mortal',
+    dao_fragments: 0,
+    se_current: 100,
+    se_max: 100,
+    stats_qi: 10,
+    stats_iron: 10,
+    stats_wind: 10,
+    stats_shadow: 10,
+    stats_veil: 10,
+    stats_mind: 10,
+    stats_soul: 10,
+    created_at: new Date().toISOString()
+  };
+  
+  const { error: insertErr } = await SB.from('players').insert(newPlayer);
+  if (insertErr) { msg.textContent = 'Profile creation failed.'; msg.className = 'msg err'; return; }
+  
+  msg.textContent = 'Awakening complete. Enter the realm.';
+  msg.className = 'msg ok';
+  setTimeout(() => loadPlayer(userId), 1000);
+};
+
+window.doReset = async () => {
+  const newPass = document.getElementById('newPass').value;
+  const confirmPass = document.getElementById('confirmPass').value;
+  const msg = document.getElementById('resetMsg');
+  
+  msg.textContent = '';
+  if (!newPass || newPass.length < 8) { msg.textContent = 'Seal must be at least 8 characters.'; msg.className = 'msg err'; return; }
+  if (newPass !== confirmPass) { msg.textContent = 'Seals do not match.'; msg.className = 'msg err'; return; }
+  
+  const { error } = await SB.auth.updateUser({ password: newPass });
+  if (error) { msg.textContent = error.message; msg.className = 'msg err'; return; }
+  
+  msg.textContent = 'Dao Seal reset successfully.';
+  msg.className = 'msg ok';
+  setTimeout(() => showPage('authPage'), 1500);
+};
+
+window.doLogout = async () => {
+  await SB.auth.signOut();
+  player = null;
+  showPage('authPage');
+  document.getElementById('bnav').classList.remove('show');
+};
+
+window.showPage = (id) => {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+};
+
+async function loadPlayer(userId) {
+  const { data, error } = await SB.from('players').select('*').eq('id', userId).single();
+  if (error || !data) { 
+    showToast('Failed to load cultivation profile', 'err'); 
+    return; 
+  }
+  
+  player = data;
+  updateDashboard();
+  showPage('dashPage');
+  document.getElementById('bnav').classList.add('show');
+  loadCrimes();
+}
+
+function updateDashboard() {
+  if (!player) return;
+  
+  // Header
+  document.getElementById('dashName').textContent = player.name;
+  document.getElementById('dashSub').textContent = player.realm + ' Cultivator';
+  
+  // Alignment card
+  const alignCard = document.getElementById('alignCard');
+  const alignVal = document.getElementById('alignVal');
+  const alignNum = document.getElementById('alignNum');
+  
+  let alignClass = 'neutral';
+  let alignText = 'Void Dao';
+  let alignNumVal = player.alignment_value || 0;
+  
+  if (player.alignment === 'chaos' || alignNumVal < -20) {
+    alignClass = 'chaos';
+    alignText = 'Demon Dao';
+  } else if (player.alignment === 'order' || alignNumVal > 20) {
+    alignClass = 'order';
+    alignText = 'Heaven Dao';
+  }
+  
+  alignCard.className = 'align-card ' + alignClass;
+  alignCard.setAttribute('data-h', alignText === 'Demon Dao' ? '魔' : alignText === 'Heaven Dao' ? '天' : '道');
+  alignVal.textContent = alignText;
+  alignNum.textContent = (alignNumVal > 0 ? '+' : '') + alignNumVal;
+  
+  // Resources
+  document.getElementById('resCoins').textContent = player.coins || 0;
+  document.getElementById('resBank').textContent = player.bank || 0;
+  document.getElementById('resRealm').textContent = player.realm || 'Mortal';
+  document.getElementById('resDao').textContent = player.dao_fragments || 0;
+  
+  // SE Bar
+  const seCurrent = player.se_current || 0;
+  const seMax = player.se_max || 100;
+  const sePct = (seCurrent / seMax) * 100;
+  document.getElementById('seText').textContent = `${seCurrent}/${seMax}`;
+  document.getElementById('seBar').style.width = sePct + '%';
+  
+  // Stats
+  document.getElementById('sQi').textContent = player.stats_qi || 10;
+  document.getElementById('sIron').textContent = player.stats_iron || 10;
+  document.getElementById('sWind').textContent = player.stats_wind || 10;
+  document.getElementById('sShadow').textContent = player.stats_shadow || 10;
+  document.getElementById('sVeil').textContent = player.stats_veil || 10;
+  document.getElementById('sMind').textContent = player.stats_mind || 10;
+  document.getElementById('sSoul').textContent = player.stats_soul || 10;
+}
+
+async function loadCrimes() {
+  const list = document.getElementById('crimesList');
+  list.innerHTML = '<div style="text-align:center;color:var(--mist);padding:20px;font-size:0.78rem;opacity:0.5">Loading missions...</div>';
+  
+  const { data, error } = await SB.from('crimes').select('*').order('min_level', { ascending: true });
+  if (error) {
+    list.innerHTML = '<div style="text-align:center;color:var(--ember);padding:20px;font-size:0.78rem">Failed to load missions</div>';
+    return;
+  }
+  
+  if (!data || data.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--mist);padding:20px;font-size:0.78rem;opacity:0.5">No missions available</div>';
+    return;
+  }
+  
+  list.innerHTML = '';
+  data.forEach(crime => {
+    const div = document.createElement('div');
+    div.className = 'crime-card';
+    div.style.setProperty('--cc', crime.alignment_type === 'chaos' ? 'var(--crimson)' : crime.alignment_type === 'order' ? 'var(--jade-bright)' : 'var(--mist)');
+    div.onclick = () => openCrimeModal(crime);
+    
+    div.innerHTML = `
+      <div>
+        <div class="crime-name">${crime.name}</div>
+        <div class="crime-meta">${crime.description || 'No description'}</div>
+      </div>
+      <div class="crime-r">
+        <div class="crime-coins">${crime.coins_min}-${crime.coins_max} SC</div>
+        <div class="crime-se">-${crime.energy_cost} SE</div>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+window.openCrimeModal = (crime) => {
+  selCrime = crime;
+  document.getElementById('mName').textContent = crime.name;
+  document.getElementById('mSub').textContent = crime.description || 'Mission details';
+  
+  // Calculate success chance based on player stats vs crime difficulty
+  const totalStats = (player.stats_qi + player.stats_iron + player.stats_wind + player.stats_shadow + player.stats_veil + player.stats_mind + player.stats_soul) / 7;
+  const difficulty = crime.difficulty || 50;
+  let chance = Math.min(95, Math.max(5, 50 + (totalStats - difficulty) / 2));
+  
+  document.getElementById('mChance').textContent = Math.round(chance) + '%';
+  document.getElementById('mCoins').textContent = `${crime.coins_min}-${crime.coins_max}`;
+  document.getElementById('mEnergy').textContent = `-${crime.energy_cost} SE`;
+  document.getElementById('mJail').textContent = (crime.jail_risk || 0) + '%';
+  document.getElementById('mAlign').textContent = (crime.alignment_shift > 0 ? '+' : '') + (crime.alignment_shift || 0);
+  
+  document.getElementById('crimeOverlay').classList.add('open');
+};
+
+window.closeModal = () => {
+  document.getElementById('crimeOverlay').classList.remove('open');
+  selCrime = null;
+};
+
+window.maybeClose = (e) => {
+  if (e.target.id === 'crimeOverlay') closeModal();
+};
+
+window.commitCrime = async () => {
+  if (!selCrime || !player) return;
+  
+  const seCost = selCrime.energy_cost || 10;
+  if (player.se_current < seCost) {
+    showToast('Insufficient Spiritual Energy', 'err');
+    closeModal();
+    return;
+  }
+  
+  closeModal();
+  
+  // Calculate outcome
+  const totalStats = (player.stats_qi + player.stats_iron + player.stats_wind + player.stats_shadow + player.stats_veil + player.stats_mind + player.stats_soul) / 7;
+  const difficulty = selCrime.difficulty || 50;
+  const successRoll = Math.random() * 100;
+  const successChance = Math.min(95, Math.max(5, 50 + (totalStats - difficulty) / 2));
+  
+  let outcome = '';
+  let coinsGained = 0;
+  let alignmentShift = selCrime.alignment_shift || 0;
+  let jailTime = 0;
+  
+  if (successRoll <= successChance) {
+    // Success
+    coinsGained = Math.floor(Math.random() * (selCrime.coins_max - selCrime.coins_min + 1)) + selCrime.coins_min;
+    outcome = 'success';
+    showToast(`Mission complete! Gained ${coinsGained} Spirit Coins`, 'ok');
+  } else {
+    // Failure - check jail
+    const jailRoll = Math.random() * 100;
+    const jailRisk = selCrime.jail_risk || 0;
+    
+    if (jailRoll <= jailRisk) {
+      outcome = 'jail';
+      jailTime = selCrime.jail_duration || 300; // 5 min default
+      showToast('Captured! Sent to Dao Prison', 'err');
+    } else {
+      outcome = 'fail';
+      showToast('Mission failed. Barely escaped.', 'err');
+    }
+  }
+  
+  // Update player
+  const updates = {
+    se_current: Math.max(0, player.se_current - seCost),
+    coins: (player.coins || 0) + coinsGained,
+    alignment_value: (player.alignment_value || 0) + alignmentShift,
+    dao_fragments: (player.dao_fragments || 0) + (outcome === 'success' ? Math.floor(coinsGained / 10) : 0)
+  };
+  
+  if (jailTime > 0) {
+    updates.jail_until = new Date(Date.now() + jailTime * 1000).toISOString();
+  }
+  
+  const { error } = await SB.from('players').update(updates).eq('id', player.id);
+  if (error) {
+    showToast('Failed to update cultivation record', 'err');
+    return;
+  }
+  
+  // Log the attempt
+  await SB.from('crime_logs').insert({
+    player_id: player.id,
+    crime_id: selCrime.id,
+    outcome,
+    coins_gained: coinsGained,
+    alignment_shift: alignmentShift,
+    created_at: new Date().toISOString()
+  });
+  
+  // Reload player
+  await loadPlayer(player.id);
+};
+
+function showToast(text, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = text;
+  toast.className = 'toast ' + (type || '');
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Check auth state on load
+SB.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    loadPlayer(session.user.id);
+  } else if (event === 'SIGNED_OUT') {
+    player = null;
+    showPage('authPage');
+    document.getElementById('bnav').classList.remove('show');
+  } else if (event === 'PASSWORD_RECOVERY') {
+    showPage('resetPage');
+  }
+});
+
+// Initial check
+SB.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    loadPlayer(session.user.id);
+  }
+});
+</script>
+</body>
+</html>
+
  
