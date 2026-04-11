@@ -1,1 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARMA</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#03000a;color:#e8dcc8;font-family:Georgia,serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 50%,rgba(139,0,0,0.08) 0%,transparent 70%),radial-gradient(ellipse 40% 60% at 80% 30%,rgba(26,107,74,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.page{display:none;min-height:100vh;position:relative;z-index:1;}
+.page.show{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#dashPage.show{align-items:stretch;justify-content:flex-start;padding:0 0 70px 0;}
+.box{width:100%;max-width:380px;}
+.logo{font-family:'Cinzel',serif;font-size:3.2rem;font-weight:900;text-align:center;letter-spacing:0.4em;background:linear-gradient(180deg,#e8dcc8 0%,#c9a84c 50%,#8b0000 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
+.tagline{text-align:center;color:#a89bc2;font-style:italic;font-size:0.84rem;letter-spacing:0.1em;margin-bottom:28px;}
+.tabs{display:flex;border:1px solid rgba(201,168,76,0.3);border-radius:3px;overflow:hidden;margin-bottom:22px;}
+.tab{flex:1;padding:11px;background:transparent;border:none;color:#a89bc2;font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.15em;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.tab.active{background:rgba(201,168,76,0.1);color:#c9a84c;border-bottom-color:#c9a84c;}
+.panel{display:none;}
+.panel.show{display:block;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:0.6rem;letter-spacing:0.2em;color:#a89bc2;text-transform:uppercase;margin-bottom:5px;}
+.field input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.2);border-radius:2px;padding:12px 14px;color:#e8dcc8;font-family:Georgia,serif;font-size:1rem;outline:none;transition:border-color 0.2s;}
+.field input:focus{border-color:rgba(201,168,76,0.6);}
+.field input::placeholder{color:rgba(168,155,194,0.35);}
+.paths{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:16px;}
+.pth{padding:10px 4px;border-radius:2px;border:1px solid rgba(168,155,194,0.3);background:transparent;color:#a89bc2;font-family:'Cinzel',serif;font-size:0.55rem;letter-spacing:0.05em;cursor:pointer;text-align:center;transition:all 0.2s;}
+.pth .pi{font-size:1rem;display:block;margin-bottom:3px;}
+.pth.chaos{border-color:rgba(139,0,0,0.5);color:#e74c3c;}
+.pth.chaos.on{background:rgba(139,0,0,0.2);}
+.pth.order{border-color:rgba(26,107,74,0.5);color:#27ae60;}
+.pth.order.on{background:rgba(26,107,74,0.2);}
+.pth.void.on{background:rgba(168,155,194,0.1);}
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,rgba(139,0,0,0.7),rgba(80,0,0,0.9));border:1px solid rgba(201,168,76,0.35);border-radius:2px;color:#e8dcc8;font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.22em;cursor:pointer;transition:all 0.2s;margin-top:2px;}
+.btn:hover{border-color:rgba(201,168,76,0.7);box-shadow:0 0 20px rgba(139,0,0,0.3);}
+.btn.jade{background:linear-gradient(135deg,rgba(26,107,74,0.7),rgba(15,60,40,0.9));}
+.btn.ghost{background:transparent;border-color:rgba(201,168,76,0.2);color:#a89bc2;margin-top:10px;}
+.smsg{text-align:center;font-size:0.78rem;margin-top:11px;min-height:18px;}
+.smsg.err{color:#e74c3c;}
+.smsg.ok{color:#27ae60;}
+.forgot-link{display:block;text-align:center;color:#a89bc2;font-size:0.68rem;letter-spacing:0.1em;margin-top:12px;cursor:pointer;opacity:0.6;font-style:italic;}
+.forgot-link:hover{opacity:1;color:#c9a84c;}
+.page-title{font-family:'Cinzel',serif;font-size:1.3rem;color:#c9a84c;text-align:center;margin-bottom:6px;letter-spacing:0.2em;}
+.page-sub{text-align:center;color:#a89bc2;font-style:italic;font-size:0.78rem;margin-bottom:22px;}
+.back-link{display:block;text-align:center;color:#a89bc2;font-size:0.65rem;letter-spacing:0.1em;margin-top:14px;cursor:pointer;opacity:0.6;}
+.back-link:hover{opacity:1;}
+.header{background:rgba(8,4,18,0.97);border-bottom:1px solid rgba(201,168,76,0.15);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.hlogo{font-family:'Cinzel',serif;font-size:0.95rem;font-weight:900;letter-spacing:0.3em;color:#c9a84c;}
+.hname{font-family:'Cinzel',serif;font-size:0.74rem;color:#c9a84c;text-align:right;}
+.hsub{font-size:0.58rem;color:#a89bc2;font-style:italic;text-align:right;}
+.body{padding:15px;}
+.sec{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.25em;color:#c9a84c;opacity:0.6;margin:16px 0 9px;padding-bottom:4px;border-bottom:1px solid rgba(201,168,76,0.1);}
+.abanner{border-radius:4px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(168,155,194,0.25);background:rgba(168,155,194,0.06);}
+.abanner.chaos{border-color:rgba(139,0,0,0.35);background:rgba(139,0,0,0.1);}
+.abanner.order{border-color:rgba(26,107,74,0.35);background:rgba(26,107,74,0.1);}
+.albl{font-family:'Cinzel',serif;font-size:0.56rem;letter-spacing:0.15em;opacity:0.55;margin-bottom:3px;}
+.aname{font-family:'Cinzel',serif;font-size:0.88rem;}
+.ascore{font-family:'Cinzel',serif;font-size:1.5rem;font-weight:900;opacity:0.75;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.card{background:rgba(232,220,200,0.05);border:1px solid rgba(201,168,76,0.1);border-radius:4px;padding:11px;position:relative;overflow:hidden;}
+.card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--c,#c9a84c);opacity:0.5;}
+.clbl{font-size:0.55rem;letter-spacing:0.15em;color:#a89bc2;text-transform:uppercase;margin-bottom:4px;}
+.cval{font-family:'Cinzel',serif;font-size:1.1rem;}
+.csub{font-size:0.56rem;color:#a89bc2;opacity:0.5;margin-top:2px;}
+.sebar{background:rgba(232,220,200,0.05);border:1px solid rgba(201,168,76,0.1);border-radius:4px;padding:11px;}
+.sebartop{display:flex;justify-content:space-between;margin-bottom:7px;}
+.setrack{height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.sefill{height:100%;background:linear-gradient(90deg,#8b0000,#c9a84c);border-radius:3px;transition:width 0.8s;}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.srow{background:rgba(232,220,200,0.05);border:1px solid rgba(201,168,76,0.08);border-radius:4px;padding:8px 11px;display:flex;justify-content:space-between;align-items:center;}
+.srow.full{grid-column:1/-1;}
+.sn{font-size:0.64rem;color:#a89bc2;}
+.sv{font-family:'Cinzel',serif;font-size:0.78rem;color:#c9a84c;}
+.mlist{display:flex;flex-direction:column;gap:6px;}
+.mcard{background:rgba(232,220,200,0.05);border:1px solid rgba(201,168,76,0.08);border-radius:4px;padding:11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;position:relative;overflow:hidden;transition:background 0.2s;}
+.mcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,#8b0000);}
+.mcard:active{background:rgba(201,168,76,0.06);}
+.mn{font-family:'Cinzel',serif;font-size:0.68rem;color:#e8dcc8;margin-bottom:3px;}
+.mm{font-size:0.58rem;color:#a89bc2;opacity:0.6;}
+.mr{text-align:right;}
+.mc{font-family:'Cinzel',serif;font-size:0.7rem;color:#c9a84c;}
+.me{font-size:0.55rem;color:#e74c3c;margin-top:2px;}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(5,2,14,0.98);border-top:1px solid rgba(201,168,76,0.12);display:none;z-index:50;}
+.bnav.show{display:flex;}
+.bni{flex:1;padding:10px 3px;background:transparent;border:none;color:#a89bc2;font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.05em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:0.5;}
+.bni.on{color:#c9a84c;opacity:1;}
+.bni .ni{font-size:0.9rem;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:#0e0818;border:1px solid rgba(201,168,76,0.25);border-bottom:none;border-radius:12px 12px 0 0;width:100%;max-width:480px;padding:20px 16px 36px;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);}
+.overlay.open .modal{transform:translateY(0);}
+.modal h3{font-family:'Cinzel',serif;font-size:0.88rem;color:#e8dcc8;margin-bottom:3px;}
+.modal p{font-size:0.68rem;color:#a89bc2;font-style:italic;margin-bottom:13px;}
+.mrow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.74rem;}
+.mrl{color:#a89bc2;}
+.mrr{font-family:'Cinzel',serif;color:#e8dcc8;}
+.mbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.bdo{padding:10px;border-radius:2px;border:1px solid rgba(139,0,0,0.5);background:rgba(139,0,0,0.25);color:#e8dcc8;font-family:'Cinzel',serif;font-size:0.64rem;letter-spacing:0.1em;cursor:pointer;}
+.bno{padding:10px;border-radius:2px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:#a89bc2;font-family:'Cinzel',serif;font-size:0.64rem;letter-spacing:0.1em;cursor:pointer;}
+.toast{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-16px);background:#0e0818;border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:8px 18px;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;z-index:400;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{color:#27ae60;border-color:rgba(39,174,96,0.4);}
+.toast.err{color:#e74c3c;border-color:rgba(231,76,60,0.4);}
+</style>
+</head>
+<body>
 
+<!-- ════ AUTH PAGE ════ -->
+<div id="authPage" class="page show">
+  <div class="box">
+    <div class="logo">KARMA</div>
+    <div class="tagline">You play the odds. The world plays you.</div>
+    <div class="tabs">
+      <button class="tab active" id="t1" onclick="switchTab('login')">RETURN</button>
+      <button class="tab" id="t2" onclick="switchTab('register')">BEGIN</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPanel" class="panel show">
+      <div class="field">
+        <label>Spirit Email</label>
+        <input type="email" id="li_email" placeholder="your@email.com">
+      </div>
+      <div class="field">
+        <label>Dao Seal (Password)</label>
+        <input type="password" id="li_pass" placeholder="••••••••">
+      </div>
+      <button class="btn" id="loginBtn">ENTER THE REALM</button>
+      <span class="forgot-link" onclick="goTo('forgotPage')">Forgot your Dao Seal?</span>
+      <div class="smsg" id="li_msg"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="regPanel" class="panel">
+      <div class="field">
+        <label>Cultivator Name</label>
+        <input type="text" id="re_name" placeholder="Your name in this world">
+      </div>
+      <div class="field">
+        <label>Spirit Email</label>
+        <input type="email" id="re_email" placeholder="your@email.com">
+      </div>
+      <div class="field">
+        <label>Dao Seal (min 8 characters)</label>
+        <input type="password" id="re_pass" placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label>Choose Your Path</label>
+        <div class="paths">
+          <button class="pth chaos on" id="pb_chaos" onclick="pickPath('chaos')"><span class="pi">☯</span>DEMON DAO</button>
+          <button class="pth order" id="pb_order" onclick="pickPath('order')"><span class="pi">⚡</span>HEAVEN DAO</button>
+          <button class="pth void" id="pb_void" onclick="pickPath('void')"><span class="pi">◈</span>VOID DAO</button>
+        </div>
+      </div>
+      <button class="btn" id="regBtn">AWAKEN</button>
+      <div class="smsg" id="re_msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FORGOT PASSWORD PAGE ════ -->
+<div id="forgotPage" class="page">
+  <div class="box">
+    <div class="logo" style="font-size:2rem;margin-bottom:16px">KARMA</div>
+    <div class="page-title">Forgot Dao Seal?</div>
+    <div class="page-sub">Enter your Spirit Email and we will send you a recovery link</div>
+    <div class="field">
+      <label>Spirit Email</label>
+      <input type="email" id="fg_email" placeholder="your@email.com">
+    </div>
+    <button class="btn" id="forgotBtn">SEND RECOVERY LINK</button>
+    <div class="smsg" id="fg_msg"></div>
+    <span class="back-link" onclick="goTo('authPage')">← Return to login</span>
+  </div>
+</div>
+
+<!-- ════ RESET PASSWORD PAGE ════ -->
+<div id="resetPage" class="page">
+  <div class="box">
+    <div class="logo" style="font-size:2rem;margin-bottom:16px">KARMA</div>
+    <div class="page-title">Reset Dao Seal</div>
+    <div class="page-sub">Enter your new password to reclaim your path</div>
+    <div class="field">
+      <label>New Dao Seal</label>
+      <input type="password" id="rs_new" placeholder="Minimum 8 characters">
+    </div>
+    <div class="field">
+      <label>Confirm Dao Seal</label>
+      <input type="password" id="rs_confirm" placeholder="Repeat password">
+    </div>
+    <button class="btn jade" id="resetBtn">SEAL THE PATH</button>
+    <div class="smsg" id="rs_msg"></div>
+  </div>
+</div>
+
+<!-- ════ DASHBOARD PAGE ════ -->
+<div id="dashPage" class="page">
+  <div class="header">
+    <div class="hlogo">KARMA</div>
+    <div>
+      <div class="hname" id="h_name">—</div>
+      <div class="hsub" id="h_sub">Cultivator</div>
+    </div>
+  </div>
+  <div class="body">
+
+    <div class="sec">CULTIVATION ALIGNMENT</div>
+    <div class="abanner neutral" id="alignBanner">
+      <div>
+        <div class="albl">CURRENT PATH</div>
+        <div class="aname" id="a_name">Void Dao · Neutral</div>
+      </div>
+      <div class="ascore" id="a_score">0</div>
+    </div>
+
+    <div class="sec">RESOURCES</div>
+    <div class="g2">
+      <div class="card" style="--c:#c9a84c"><div class="clbl">Spirit Coins</div><div class="cval" id="d_coins">—</div><div class="csub">On hand</div></div>
+      <div class="card" style="--c:#27ae60"><div class="clbl">Bank Vault</div><div class="cval" id="d_bank">—</div><div class="csub">Secured</div></div>
+      <div class="card" style="--c:#a89bc2"><div class="clbl">Cultivation Realm</div><div class="cval" id="d_realm">—</div><div class="csub">Current stage</div></div>
+      <div class="card" style="--c:#e74c3c"><div class="clbl">Dao Fragments</div><div class="cval" id="d_dao">—</div><div class="csub">Total XP</div></div>
+    </div>
+
+    <div class="sec">SPIRITUAL ENERGY</div>
+    <div class="sebar">
+      <div class="sebartop">
+        <span style="font-size:0.56rem;letter-spacing:0.15em;color:#a89bc2;text-transform:uppercase">Energy</span>
+        <span style="font-family:'Cinzel',serif;font-size:0.74rem;color:#c9a84c" id="se_text">—</span>
+      </div>
+      <div class="setrack"><div class="sefill" id="se_fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="sec">CULTIVATION ARTS</div>
+    <div class="sgrid">
+      <div class="srow"><span class="sn">Qi Force</span><span class="sv" id="st_qi">—</span></div>
+      <div class="srow"><span class="sn">Iron Body</span><span class="sv" id="st_iron">—</span></div>
+      <div class="srow"><span class="sn">Wind Step</span><span class="sv" id="st_wind">—</span></div>
+      <div class="srow"><span class="sn">Shadow Hand</span><span class="sv" id="st_shadow">—</span></div>
+      <div class="srow"><span class="sn">Veil Art</span><span class="sv" id="st_veil">—</span></div>
+      <div class="srow"><span class="sn">Mind Dao</span><span class="sv" id="st_mind">—</span></div>
+      <div class="srow full"><span class="sn">Soul Root</span><span class="sv" id="st_soul">—</span></div>
+    </div>
+
+    <div class="sec">AVAILABLE MISSIONS</div>
+    <div class="mlist" id="missionList">
+      <div style="text-align:center;color:#a89bc2;padding:20px;font-size:0.76rem;opacity:0.5">Loading missions...</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bnav" id="bnav">
+  <button class="bni on"><span class="ni">⌂</span>REALM</button>
+  <button class="bni"><span class="ni">◈</span>MISSIONS</button>
+  <button class="bni"><span class="ni">⚔</span>SECT</button>
+  <button class="bni"><span class="ni">☯</span>DAO</button>
+  <button class="bni" id="logoutBtn"><span class="ni">↩</span>LEAVE</button>
+</div>
+
+<!-- Mission Modal -->
+<div class="overlay" id="mOverlay">
+  <div class="modal">
+    <h3 id="m_name">—</h3>
+    <p id="m_cat">—</p>
+    <div class="mrow"><span class="mrl">Success Chance</span><span class="mrr" id="m_chance">—</span></div>
+    <div class="mrow"><span class="mrl">Spirit Coins</span><span class="mrr" id="m_coins">—</span></div>
+    <div class="mrow"><span class="mrl">Energy Cost</span><span class="mrr" id="m_energy">—</span></div>
+    <div class="mrow"><span class="mrl">Dao Prison Risk</span><span class="mrr" id="m_jail">—</span></div>
+    <div class="mrow"><span class="mrl">Alignment Shift</span><span class="mrr" id="m_align">—</span></div>
+    <div class="mbtns">
+      <button class="bdo" id="commitBtn">COMMIT</button>
+      <button class="bno" id="cancelBtn">RETREAT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const sb = createClient(
+  'https://errhvfrlkdjwwesvzuod.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycmh2ZnJsa2Rqd3dlc3Z6dW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMjQ3NzAsImV4cCI6MjA5MDYwMDc3MH0.UuJCJMl66_rYB03UxMEzbZisqmKAqxYQDRZVgPleclk'
+);
+
+let currentUser = null;
+let currentPlayer = null;
+let currentCrime = null;
+let chosenPath = 'chaos';
+
+// ── PAGE SWITCH ──
+window.goTo = function(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+  document.getElementById('bnav').classList.toggle('show', id === 'dashPage');
+};
+
+// ── TAB SWITCH ──
+window.switchTab = function(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('t1').classList.toggle('active', isLogin);
+  document.getElementById('t2').classList.toggle('active', !isLogin);
+  document.getElementById('loginPanel').classList.toggle('show', isLogin);
+  document.getElementById('regPanel').classList.toggle('show', !isLogin);
+};
+
+// ── PATH PICK ──
+window.pickPath = function(p) {
+  chosenPath = p;
+  ['chaos','order','void'].forEach(x => {
+    document.getElementById('pb_' + x).classList.toggle('on', x === p);
+  });
+};
+
+// ── TOAST ──
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ── FORMAT ──
+function fmt(n) {
+  if (n == null) return '—';
+  const v = Number(n);
+  if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+  return v.toLocaleString();
+}
+
+// ── SET MSG ──
+function msg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'smsg' + (type ? ' ' + type : '');
+}
+
+// ══════════════════════════════
+// LOGIN
+// ══════════════════════════════
+async function login() {
+  const email = document.getElementById('li_email').value.trim();
+  const pass  = document.getElementById('li_pass').value;
+
+  if (!email || !pass) { msg('li_msg', 'Fill in both fields.', 'err'); return; }
+
+  msg('li_msg', 'Entering the realm...');
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  if (error) { msg('li_msg', error.message, 'err'); return; }
+
+  msg('li_msg', '');
+  currentUser = data.user;
+  await loadDashboard();
+}
+
+// ══════════════════════════════
+// REGISTER
+// ══════════════════════════════
+async function register() {
+  const name  = document.getElementById('re_name').value.trim();
+  const email = document.getElementById('re_email').value.trim();
+  const pass  = document.getElementById('re_pass').value;
+
+  if (!name || !email || !pass) { msg('re_msg', 'Fill in all fields.', 'err'); return; }
+  if (pass.length < 8) { msg('re_msg', 'Password must be at least 8 characters.', 'err'); return; }
+
+  msg('re_msg', 'Awakening your spirit...');
+
+  const align = chosenPath === 'chaos' ? -200 : chosenPath === 'order' ? 200 : 0;
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+
+  if (error) { msg('re_msg', error.message, 'err'); return; }
+
+  if (data.user) {
+    await sb.from('players').insert({
+      id: data.user.id,
+      username: name,
+      password_hash: 'SUPABASE_AUTH',
+      email_hash: email,
+      cultivation_alignment: align,
+      spirit_coins: 500,
+      cultivation_realm: 1,
+      dao_fragments: 0
+    });
+    await sb.from('player_stats').insert({
+      player_id: data.user.id,
+      qi_force: 10, iron_body: 10, wind_step: 10,
+      shadow_hand: 10, veil_art: 1, mind_dao: 1, soul_root: 1
+    });
+  }
+
+  msg('re_msg', 'Spirit awakened! Check your email to verify, then log in.', 'ok');
+}
+
+// ══════════════════════════════
+// FORGOT PASSWORD
+// ══════════════════════════════
+async function forgotPassword() {
+  const email = document.getElementById('fg_email').value.trim();
+  if (!email) { msg('fg_msg', 'Enter your Spirit Email.', 'err'); return; }
+
+  msg('fg_msg', 'Sending recovery link...');
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://thoucrypyogod.github.io/Karma'
+  });
+
+  if (error) { msg('fg_msg', error.message, 'err'); return; }
+
+  msg('fg_msg', 'Recovery link sent! Check your email.', 'ok');
+}
+
+// ══════════════════════════════
+// RESET PASSWORD
+// ══════════════════════════════
+async function resetPassword() {
+  const np = document.getElementById('rs_new').value;
+  const cp = document.getElementById('rs_confirm').value;
+
+  if (!np || np.length < 8) { msg('rs_msg', 'Password must be at least 8 characters.', 'err'); return; }
+  if (np !== cp) { msg('rs_msg', 'Passwords do not match.', 'err'); return; }
+
+  msg('rs_msg', 'Sealing the path...');
+
+  const { error } = await sb.auth.updateUser({ password: np });
+
+  if (error) { msg('rs_msg', error.message, 'err'); return; }
+
+  msg('rs_msg', 'Dao Seal updated! Redirecting...', 'ok');
+  setTimeout(() => window.goTo('authPage'), 2000);
+  }
+  // ══════════════════════════════
+// LOGOUT
+// ══════════════════════════════
+async function logout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  currentPlayer = null;
+  window.goTo('authPage');
+}
+
+// ══════════════════════════════
+// LOAD DASHBOARD
+// ══════════════════════════════
+async function loadDashboard() {
+  window.goTo('dashPage');
+
+  const { data: p } = await sb.from('players').select('*').eq('id', currentUser.id).single();
+  const { data: s } = await sb.from('player_stats').select('*').eq('player_id', currentUser.id).single();
+
+  if (!p) { toast('Could not load player data.', 'err'); return; }
+  currentPlayer = p;
+
+  // Header
+  document.getElementById('h_name').textContent = p.username;
+  document.getElementById('h_sub').textContent = p.username === 'Tianmo' ? 'Tiānmó · Fearless Alliance' : 'Cultivator';
+
+  // Alignment
+  const al = p.cultivation_alignment ?? 0;
+  const banner = document.getElementById('alignBanner');
+  const aname  = document.getElementById('a_name');
+  document.getElementById('a_score').textContent = al;
+  if (al < -100) {
+    banner.className = 'abanner chaos';
+    aname.textContent = 'Demon Dao · Path of Chaos';
+    aname.style.color = '#e74c3c';
+  } else if (al > 100) {
+    banner.className = 'abanner order';
+    aname.textContent = 'Heaven Dao · Path of Order';
+    aname.style.color = '#27ae60';
+  } else {
+    banner.className = 'abanner neutral';
+    aname.textContent = 'Void Dao · The Middle Path';
+    aname.style.color = '#a89bc2';
+  }
+
+  // Resources
+  document.getElementById('d_coins').textContent = fmt(p.spirit_coins);
+  document.getElementById('d_bank').textContent  = fmt(p.bank ?? 0);
+  document.getElementById('d_realm').textContent = 'Realm ' + (p.cultivation_realm ?? 1);
+  document.getElementById('d_dao').textContent   = fmt(p.dao_fragments ?? 0);
+
+  // Energy
+  const se = p.spiritual_energy ?? 0;
+  const seMax = p.spiritual_energy_max ?? 100;
+  document.getElementById('se_text').textContent = se + ' / ' + seMax;
+  document.getElementById('se_fill').style.width = Math.min(100, (se / seMax) * 100) + '%';
+
+  // Stats
+  if (s) {
+    document.getElementById('st_qi').textContent     = fmt(s.qi_force);
+    document.getElementById('st_iron').textContent   = fmt(s.iron_body);
+    document.getElementById('st_wind').textContent   = fmt(s.wind_step);
+    document.getElementById('st_shadow').textContent = fmt(s.shadow_hand);
+    document.getElementById('st_veil').textContent   = fmt(s.veil_art);
+    document.getElementById('st_mind').textContent   = fmt(s.mind_dao);
+    document.getElementById('st_soul').textContent   = fmt(s.soul_root);
+  }
+
+  await loadMissions();
+}
+
+// ══════════════════════════════
+// LOAD MISSIONS
+// ══════════════════════════════
+async function loadMissions() {
+  const { data: crimes } = await sb.from('crimes').select('*').order('min_realm');
+  const list = document.getElementById('missionList');
+
+  if (!crimes || crimes.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#a89bc2;padding:20px;font-size:0.76rem;opacity:0.5">No missions available.</div>';
+    return;
+  }
+
+  list.innerHTML = crimes.map(c => {
+    const col  = c.alignment_shift > 0 ? '#27ae60' : '#8b0000';
+    const data = encodeURIComponent(JSON.stringify(c));
+    return `<div class="mcard" style="--c:${col}" onclick="window.openMission('${data}')">
+      <div>
+        <div class="mn">${c.name}</div>
+        <div class="mm">${c.category.toUpperCase()} · Realm ${c.min_realm}+</div>
+      </div>
+      <div class="mr">
+        <div class="mc">🪙 ${fmt(c.spirit_coins_max)}</div>
+        <div class="me">⚡ ${c.spiritual_energy_cost} SE</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════
+// OPEN MISSION MODAL
+// ══════════════════════════════
+window.openMission = function(encoded) {
+  const c = JSON.parse(decodeURIComponent(encoded));
+  currentCrime = c;
+  const chance = Math.round(Math.min(92, (c.base_success_rate + 0.2) * 100));
+  document.getElementById('m_name').textContent   = c.name;
+  document.getElementById('m_cat').textContent    = c.category.toUpperCase() + ' MISSION';
+  document.getElementById('m_chance').textContent = chance + '%';
+  document.getElementById('m_coins').textContent  = fmt(c.spirit_coins_min) + ' – ' + fmt(c.spirit_coins_max);
+  document.getElementById('m_energy').textContent = c.spiritual_energy_cost + ' Spiritual Energy';
+  document.getElementById('m_jail').textContent   = Math.round(c.dao_prison_risk * 100) + '%';
+  document.getElementById('m_align').textContent  = c.alignment_shift > 0
+    ? '+' + c.alignment_shift + ' (Order)' : c.alignment_shift + ' (Chaos)';
+  document.getElementById('mOverlay').classList.add('open');
+};
+
+// ══════════════════════════════
+// COMMIT MISSION
+// ══════════════════════════════
+async function commitMission() {
+  if (!currentCrime || !currentPlayer) return;
+  closeModal();
+
+  const c = currentCrime;
+  const success = Math.random() < Math.min(0.92, c.base_success_rate + 0.2);
+
+  if (success) {
+    const reward = Math.floor(c.spirit_coins_min + Math.random() * (c.spirit_coins_max - c.spirit_coins_min));
+    await sb.from('players').update({
+      spirit_coins: (currentPlayer.spirit_coins ?? 0) + reward,
+      cultivation_alignment: (currentPlayer.cultivation_alignment ?? 0) + c.alignment_shift
+    }).eq('id', currentUser.id);
+    toast('Mission success! +' + fmt(reward) + ' Spirit Coins', 'ok');
+  } else {
+    if (Math.random() < c.dao_prison_risk) {
+      const until = new Date(Date.now() + c.prison_time_min * 1000).toISOString();
+      await sb.from('players').update({ dao_prison_until: until }).eq('id', currentUser.id);
+      toast('Captured! Sent to Dao Prison.', 'err');
+    } else {
+      toast('Mission failed — you barely escaped.', 'err');
+    }
+  }
+  await loadDashboard();
+}
+
+// ══════════════════════════════
+// CLOSE MODAL
+// ══════════════════════════════
+function closeModal() {
+  document.getElementById('mOverlay').classList.remove('open');
+}
+
+// ══════════════════════════════
+// WIRE ALL BUTTONS
+// ══════════════════════════════
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('regBtn').addEventListener('click', register);
+document.getElementById('forgotBtn').addEventListener('click', forgotPassword);
+document.getElementById('resetBtn').addEventListener('click', resetPassword);
+document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('commitBtn').addEventListener('click', commitMission);
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('mOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('mOverlay')) closeModal();
+});
+
+// ══════════════════════════════
+// STARTUP
+// ══════════════════════════════
+(async function() {
+  // Password reset redirect detection
+  if (window.location.hash.includes('type=recovery')) {
+    window.goTo('resetPage');
+    return;
+  }
+
+  // Auto login if session exists
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await loadDashboard();
+  }
+})();
+</script>
+</body>
+</html>
